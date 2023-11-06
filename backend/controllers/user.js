@@ -89,23 +89,36 @@ exports.register = async (req, res) => {
 };
 
 
+
+
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
+
+
     if (!user) {
       return res.status(400).json({
         message: "The entered email address is not connected to your account.",
       });
     }
-    const check = await bcrypt.compare(password, user.password);
-    if (!check) {
-      return res
-        .status(400)
-        .json({ message: "Invalid credentials, Please try again" });
+
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+
+    if (!passwordMatch) {
+      return res.status(400).json({ message: "Invalid credentials. Please try again." });
     }
-    const token = validateToken({ id: user._id.toString() }, "7d");
-    res.send({
+
+
+    // Generate and send the token as part of the response
+    const token = jwt.sign({ id: user._id.toString() },"secretkey", {
+      expiresIn: '7d',
+    });
+
+
+    res.json({
       id: user._id,
       username: user.username,
       picture: user.picture,
